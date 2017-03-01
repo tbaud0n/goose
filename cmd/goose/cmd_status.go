@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/liamstask/goose/lib/goose"
+	"github.com/tbaud0n/goose/lib/goose"
 	"database/sql"
 	"fmt"
 	"log"
