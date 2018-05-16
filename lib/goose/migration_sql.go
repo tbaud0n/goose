@@ -8,8 +8,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"regexp"
+	"strings"
 )
 
 const sqlCmdPrefix = "-- +goose "
@@ -128,7 +128,6 @@ func splitSQLStatements(r io.Reader, direction bool) (stmts []string) {
 	return
 }
 
-
 func useTransactions(scriptFile string) bool {
 	f, err := os.Open(scriptFile)
 	if err != nil {
@@ -165,9 +164,9 @@ func runSQLMigration(conf *DBConf, db *sql.DB, scriptFile string, v int64, direc
 	useTx := useTransactions(scriptFile)
 
 	f, err := os.Open(scriptFile)
- 	if err != nil {
+	if err != nil {
 		log.Fatal(err)
- 	}
+	}
 
 	if useTx {
 		err := runMigrationInTransaction(conf, db, f, v, direction, filePath)
@@ -186,35 +185,36 @@ func runSQLMigration(conf *DBConf, db *sql.DB, scriptFile string, v int64, direc
 	return nil
 }
 
-
 // Run the migration within a transaction (recommended)
 func runMigrationInTransaction(conf *DBConf, db *sql.DB, r io.Reader, v int64, direction bool, filePath string) error {
 	txn, err := db.Begin()
- 	if err != nil {
+	if err != nil {
 		log.Fatal("db.Begin:", err)
- 	}
+	}
 
- 	// find each statement, checking annotations for up/down direction
- 	// Commits the transaction if successfully applied each statement and
- 	// records the version into the version table or returns an error and
- 	// rolls back the transaction.
+	// find each statement, checking annotations for up/down direction
+	// Commits the transaction if successfully applied each statement and
+	// records the version into the version table or returns an error and
+	// rolls back the transaction.
 	for _, query := range splitSQLStatements(r, direction) {
- 		if _, err = txn.Exec(query); err != nil {
- 			txn.Rollback()
- 			return err
- 		}
- 	}
+		printQuery(query)
+		if _, err = txn.Exec(query); err != nil {
+			txn.Rollback()
+			return err
+		}
+	}
 
 	if err = FinalizeMigrationTx(conf, txn, direction, v); err != nil {
 		log.Fatalf("error finalizing migration %s, quitting. (%v)", filePath, err)
- 	}
+	}
 
- 	return nil
+	return nil
 }
 
 func runMigrationWithoutTransaction(conf *DBConf, db *sql.DB, r io.Reader, v int64, direction bool, filePath string) error {
 
 	for _, query := range splitSQLStatements(r, direction) {
+		printQuery(query)
 		if _, err := db.Exec(query); err != nil {
 			return err
 		}
